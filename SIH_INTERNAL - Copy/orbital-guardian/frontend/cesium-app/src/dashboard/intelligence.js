@@ -21,19 +21,19 @@ export const copilotContext = {
 // -----------------------------------------------------
 
 function esc(value) {
-  return String(value ?? "â€”").replace(/[&<>"']/g, (c) => ({
+  return String(value ?? "—").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   })[c]);
 }
 
 function fmtKm(km) {
-  if (km == null) return "â€”";
+  if (km == null) return "—";
   if (km < 1) return `${Math.round(km * 1000)} m`;
   return `${Number(km).toFixed(2)} km`;
 }
 
 function fmtCountdown(hours) {
-  if (hours == null) return "â€”";
+  if (hours == null) return "—";
   if (hours < 0) return "passed";
   const h = Math.floor(hours);
   const m = Math.round((hours - h) * 60);
@@ -98,7 +98,7 @@ export function showSummary(summary = null) {
 // -----------------------------------------------------
 
 export async function showObjectProfile(noradId) {
-  content.innerHTML = `<div class="ii-empty"><p>Loading object intelligenceâ€¦</p></div>`;
+  content.innerHTML = `<div class="ii-empty"><p>Loading object intelligence...</p></div>`;
 
   let profile;
 
@@ -128,7 +128,7 @@ export async function showObjectProfile(noradId) {
   const statusBadge = `<span class="badge ${status.status === "OPERATIONAL" ? "LOW" : status.status === "UNKNOWN" ? "MONITOR" : "MEDIUM"}">${esc(status.status)}</span>`;
   const freshBadge = `<span class="fresh-${esc(quality.freshness)}" style="font-size:.66rem;font-weight:700;letter-spacing:.14em">${esc(quality.freshness)}</span>`;
 
-  // Mission block â€” honest about missing metadata.
+  // Mission block — honest about missing metadata.
   let missionHtml;
 
   if (mission._debris_context) {
@@ -245,7 +245,7 @@ export async function showObjectProfile(noradId) {
 // -----------------------------------------------------
 
 export async function showEventIntelligence(conjunctionId) {
-  content.innerHTML = `<div class="ii-empty"><p>Loading event intelligenceâ€¦</p></div>`;
+  content.innerHTML = `<div class="ii-empty"><p>Loading event intelligence...</p></div>`;
 
   let risk;
 
@@ -282,7 +282,7 @@ export async function showEventIntelligence(conjunctionId) {
     <div class="ii-header">
       <div class="ii-kicker">OPERATIONAL RISK PRIORITY</div>
       <div class="big-score">
-        <b>${esc(risk.risk_score ?? "â€”")}<span style="font-size:.9rem;color:var(--text-muted)">/100</span></b>
+        <b>${esc(risk.risk_score ?? "—")}<span style="font-size:.9rem;color:var(--text-muted)">/100</span></b>
         <span class="badge ${esc(risk.risk_level)}">${esc(risk.risk_level)}</span>
       </div>
     </div>
@@ -290,7 +290,7 @@ export async function showEventIntelligence(conjunctionId) {
     ${section("RISK DRIVERS", bars)}
 
     ${section("DATA CONFIDENCE", kvList([
-      ["Confidence", esc(risk.confidence != null ? risk.confidence + "%" : "â€”")],
+      ["Confidence", esc(risk.confidence != null ? risk.confidence + "%" : "—")],
     ]))}
 
     ${section("WHY THIS RANKING", `<p class="explain-text">${esc(risk.deterministic_explanation)}</p>`)}

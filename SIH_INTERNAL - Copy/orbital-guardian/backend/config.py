@@ -1,9 +1,9 @@
-﻿"""
+"""
 Central application configuration.
 
 Every external integration reads its credentials from
 environment variables (backend/.env). Missing optional
-credentials disable the related feature gracefully â€”
+credentials disable the related feature gracefully —
 the platform never crashes because a provider key is absent.
 """
 

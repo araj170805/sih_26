@@ -1,18 +1,17 @@
-"""
+﻿"""
 AI Space Intelligence Copilot.
 
 Architecture:
 
     user question -> context detection -> tool/data retrieval
     (DB / object profile / event data) -> context builder
-    -> configured LLM (optional) -> grounded answer
+    -> Gemini LLM -> grounded answer (with deterministic fallback)
 
 RULES ENFORCED HERE:
-- The LLM receives ONLY verified system data as context.
-- If no AI provider is configured, a deterministic template
-  explainer answers using the same real data. It never invents
-  orbital quantities, statuses, or probabilities.
-- Every answer includes the data sources used.
+- The LLM receives verified system data as primary context.
+- For general questions, Gemini answers from its space domain knowledge.
+- If the AI call fails, a deterministic template answers using real data.
+- Never invents orbital quantities, statuses, or probabilities.
 """
 
 import json
@@ -124,7 +123,7 @@ def build_object_context(profile: dict) -> str:
 def explain_event_deterministic(event_data: dict) -> str:
     """
     Fully rule-based explanation built ONLY from real numbers.
-    Used when no LLM is configured — and as the factual skeleton
+    Used when no LLM is configured â€” and as the factual skeleton
     for LLM prompts.
     """
 
@@ -223,7 +222,7 @@ def explain_object_deterministic(profile: dict) -> str:
         parts.append(mission["_debris_context"])
 
     parts.append(f"Operational status: {status.get('status', 'UNKNOWN')} "
-                 f"— basis: {status.get('basis', 'unknown')}.")
+                 f"â€” basis: {status.get('basis', 'unknown')}.")
 
     orbit = profile.get("live_orbit", {})
 
@@ -243,63 +242,103 @@ def explain_object_deterministic(profile: dict) -> str:
 
 
 # ==========================================
-# LLM CALL (only when configured)
+# LLM CALL (Gemini API)
 # ==========================================
 
-SYSTEM_PROMPT = """You are Orbital Guardian's Space Intelligence Copilot.
-You explain satellite conjunction analysis to operators.
+# System prompt for context-grounded questions (object/event selected)
+SYSTEM_PROMPT_GROUNDED = """You are Orbital Guardian's Space Intelligence Copilot.
+You explain satellite conjunction analysis and space situational awareness to operators.
 
-STRICT RULES:
-- Use ONLY the VERIFIED SYSTEM DATA provided in the context.
-- Never invent positions, velocities, TCAs, distances, statuses or dates.
+RULES:
+- Use the VERIFIED SYSTEM DATA provided in the context as your primary source of truth.
+- Never contradict the verified system data.
 - Never state that a collision will occur. The risk score is a screening
   priority, not a probability of collision.
-- Be concise, technical, and factual. If information is missing, say so."""
+- Be concise, technical, and factual. Use bullet points when listing multiple points.
+- You may use your general space domain knowledge to supplement explanations,
+  but always ground your answer in the verified data first."""
+
+# System prompt for general knowledge questions (no object/event selected)
+SYSTEM_PROMPT_GENERAL = """You are Orbital Guardian's Space Intelligence Copilot â€” an expert
+AI assistant specializing in space situational awareness, orbital mechanics, satellite operations,
+conjunction analysis, and space debris.
+
+You help operators and space professionals understand:
+- Orbital mechanics (TLE, SGP4, Keplerian elements, orbital maneuvers, delta-v)
+- Conjunction analysis (TCA, miss distance, probability of collision, risk assessment)
+- Space objects (satellites, debris, rocket bodies, NORAD IDs, object types)
+- Space agencies and missions (ISS, Starlink, GPS, weather satellites, military sats)
+- Space policy (IADC debris mitigation guidelines, ITU regulations)
+- Space weather and its effects on satellites (atmospheric drag, radiation)
+- Satellite operations (maneuver planning, station-keeping, deorbit)
+
+RULES:
+- Answer clearly, accurately, and helpfully with technical depth appropriate to the question.
+- Be concise but complete. Use bullet points or numbered lists when it aids clarity.
+- If asked about a specific satellite's CURRENT position or status, tell the user
+  to select that object in the Orbital Guardian dashboard for live data.
+- Never invent real-time orbital data, live positions, or specific conjunction events.
+- If a question is completely outside space/astronomy domain, politely redirect."""
 
 
-def _call_gemini(question: str, context: str) -> str | None:
+def _call_gemini(question: str, context: str, system_prompt: str) -> str | None:
     """Google Gemini via the Generative Language API."""
 
     try:
-        response = requests.post(
-            f"{AI_BASE_URL}/models/{AI_MODEL}:generateContent",
-            params={"key": AI_API_KEY},
-            headers={"Content-Type": "application/json"},
-            json={
-                "system_instruction": {
-                    "parts": [{"text": SYSTEM_PROMPT}]
-                },
-                "contents": [
-                    {
-                        "role": "user",
-                        "parts": [
-                            {"text": f"{context}\n\nUSER QUESTION: {question}"}
-                        ],
-                    }
-                ],
-                "generationConfig": {
-                    "temperature": 0.2,
-                    "maxOutputTokens": 700,
-                },
+        url = f"{AI_BASE_URL}/models/{AI_MODEL}:generateContent"
+        params = {"key": AI_API_KEY}
+
+        user_text = f"{context}\n\nUSER QUESTION: {question}" if context else question
+
+        payload = {
+            "system_instruction": {
+                "parts": [{"text": system_prompt}]
             },
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [{"text": user_text}],
+                }
+            ],
+            "generationConfig": {
+                "temperature": 0.3,
+                "maxOutputTokens": 1024,
+            },
+        }
+
+        response = requests.post(
+            url,
+            params=params,
+            headers={"Content-Type": "application/json"},
+            json=payload,
             timeout=40,
         )
 
         if response.status_code != 200:
-            print(f"[COPILOT] Gemini HTTP {response.status_code}: "
-                  f"{response.text[:200]}")
+            print(
+                f"[COPILOT] Gemini HTTP {response.status_code}: "
+                f"{response.text[:400]}"
+            )
             return None
 
-        payload = response.json()
-
-        candidates = payload.get("candidates") or []
+        data = response.json()
+        candidates = data.get("candidates") or []
 
         if not candidates:
+            print(f"[COPILOT] Gemini returned no candidates. Response: {data}")
             return None
 
-        parts = (candidates[0].get("content") or {}).get("parts") or []
+        finish_reason = candidates[0].get("finishReason", "")
+        if finish_reason not in ("STOP", "MAX_TOKENS", ""):
+            print(f"[COPILOT] Gemini finish reason: {finish_reason}")
 
+        parts = (candidates[0].get("content") or {}).get("parts") or []
         text = "".join(p.get("text", "") for p in parts).strip()
+
+        if text:
+            print(f"[COPILOT] Gemini answered ({len(text)} chars, model={AI_MODEL})")
+        else:
+            print("[COPILOT] Gemini returned empty text.")
 
         return text or None
 
@@ -308,11 +347,14 @@ def _call_gemini(question: str, context: str) -> str | None:
         return None
 
 
-def _call_llm(question: str, context: str) -> str | None:
+def _call_llm(question: str, context: str, system_prompt: str) -> str | None:
+    """Route to the configured LLM provider."""
     if ai_provider_kind == "gemini":
-        return _call_gemini(question, context)
+        return _call_gemini(question, context, system_prompt)
 
+    # OpenAI-compatible fallback
     try:
+        user_content = f"{context}\n\nUSER QUESTION: {question}" if context else question
         response = requests.post(
             f"{AI_BASE_URL}/chat/completions",
             headers={
@@ -322,19 +364,17 @@ def _call_llm(question: str, context: str) -> str | None:
             json={
                 "model": AI_MODEL,
                 "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {
-                        "role": "user",
-                        "content": f"{context}\n\nUSER QUESTION: {question}",
-                    },
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content},
                 ],
-                "temperature": 0.2,
-                "max_tokens": 500,
+                "temperature": 0.3,
+                "max_tokens": 800,
             },
             timeout=30,
         )
 
         if response.status_code != 200:
+            print(f"[COPILOT] OpenAI-compat HTTP {response.status_code}: {response.text[:200]}")
             return None
 
         return response.json()["choices"][0]["message"]["content"].strip()
@@ -352,19 +392,26 @@ def _call_llm(question: str, context: str) -> str | None:
 def answer_question(question: str, object_profile=None, event_data=None,
                     extra_context: str = "") -> CopilotResult:
     """
-    Answer a copilot question grounded in system data.
+    Answer a copilot question using Gemini AI for ALL question types.
 
-    Priority: real event context > object profile > general knowledge.
+    Strategy:
+    1. Build context from real system data (event/object) + knowledge base.
+    2. If live system data is present â†’ grounded system prompt.
+    3. For general questions â†’ general space expert system prompt.
+    4. Always try Gemini first; fall back to deterministic only if AI fails.
     """
 
     sources = []
-
     context_parts = []
+    has_system_data = bool(event_data or object_profile)
 
     if event_data:
         context_parts.append(build_event_context(event_data))
         sources.append({"kind": "conjunction_database_record"})
-        context_parts.append(explain_event_deterministic(event_data))
+        # Include deterministic summary as additional grounding context
+        context_parts.append(
+            "DETERMINISTIC ANALYSIS:\n" + explain_event_deterministic(event_data)
+        )
 
     if object_profile:
         context_parts.append(build_object_context(object_profile))
@@ -379,7 +426,6 @@ def answer_question(question: str, object_profile=None, event_data=None,
         context_parts.append(
             f"KNOWLEDGE BASE [{hit['title']}]:\n{hit['excerpt']}"
         )
-
         sources.append({"kind": "knowledge_base", "document": hit["source"]})
 
     if extra_context:
@@ -387,38 +433,53 @@ def answer_question(question: str, object_profile=None, event_data=None,
 
     context = "\n\n".join(context_parts)
 
-    # General questions with no data and no KB hit still need an answer.
-    if not context:
-        context = (
-            "No specific object or event selected. Answer from the knowledge "
-            "base only. Do not invent any live data."
-        )
+    # Choose the right system prompt based on whether we have live system data
+    system_prompt = SYSTEM_PROMPT_GROUNDED if has_system_data else SYSTEM_PROMPT_GENERAL
 
+    # Always attempt the LLM (Gemini) first for every question
     if ai_configured:
-        llm_answer = _call_llm(question, context)
+        llm_answer = _call_llm(question, context, system_prompt)
 
         if llm_answer:
             return CopilotResult(llm_answer, sources, "llm")
 
-    # Deterministic fallback / offline mode.
+        # LLM call failed â€” log and fall through to deterministic
+        print("[COPILOT] LLM call returned None, using deterministic fallback.")
+
+    # ---- Deterministic fallback (no valid AI key or LLM call failed) ----
     if event_data and not kb_hits:
         answer = explain_event_deterministic(event_data)
     elif object_profile and not kb_hits:
         answer = explain_object_deterministic(object_profile)
     elif kb_hits:
         best = kb_hits[0]
+        suffix = (
+            "\n\n[Configure a valid Gemini API key for full conversational answers; "
+            "this summary comes directly from the bundled reference docs.]"
+            if not ai_configured else
+            "\n\n[AI service temporarily unavailable â€” showing knowledge base excerpt.]"
+        )
         answer = (
             f"From the scientific knowledge base ({best['title']}):\n\n"
             + best["excerpt"]
-            + ("\n\n[Configure an AI provider for conversational answers; "
-               "this summary comes directly from the bundled reference docs.]"
-               if not ai_configured else "")
+            + suffix
         )
     else:
-        answer = (
-            "I can only answer from verified system data and the bundled "
-            "knowledge base. Select an object or conjunction event, or ask "
-            "about concepts like TLE, SGP4, TCA or miss distance."
-        )
+        if not ai_configured:
+            answer = (
+                "No Gemini API key is configured. I can only answer from verified "
+                "system data and the bundled knowledge base. Select an object or "
+                "conjunction event in the dashboard, or ask about concepts like "
+                "TLE, SGP4, TCA or miss distance.\n\n"
+                "To enable full AI answers: add your GEMINI_API_KEY to backend/.env."
+            )
+        else:
+            # AI configured but call failed
+            answer = (
+                "I encountered an issue connecting to the Gemini AI service. "
+                "Please verify that GEMINI_API_KEY and AI_MODEL in backend/.env "
+                "are correct (current model: " + (AI_MODEL or "not set") + ").\n\n"
+                "Tip: Get a free Gemini API key at https://aistudio.google.com/apikey"
+            )
 
     return CopilotResult(answer, sources, "deterministic")

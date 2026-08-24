@@ -1,5 +1,5 @@
 // =====================================================
-// ORBITAL GUARDIAN â€” MISSION CONTROL DASHBOARD
+// ORBITAL GUARDIAN — MISSION CONTROL DASHBOARD
 // =====================================================
 
 import * as Cesium from "cesium";
@@ -170,7 +170,7 @@ async function refreshBackendProfile() {
     initProfile();
     loadWatchlists();
   } catch {
-    /* backend offline â€” keep cached profile */
+    /* backend offline — keep cached profile */
   }
 }
 
@@ -265,7 +265,7 @@ document.querySelectorAll(".collapse-toggle").forEach((toggle) => {
 });
 
 // =====================================================
-// LEFT PANEL â€” CONFIG CONTROLS
+// LEFT PANEL — CONFIG CONTROLS
 // =====================================================
 
 function renderToggles(containerId, values, key, format) {
@@ -304,7 +304,7 @@ function renderChips() {
 
     chip.className = "og-chip selected";
 
-    chip.innerHTML = `<span>${label}</span><button class="og-remove">Ã—</button>`;
+    chip.innerHTML = `<span>${label}</span><button class="og-remove">×</button>`;
 
     chip.querySelector(".og-remove").addEventListener("click", () => {
       appState.satellites = appState.satellites.filter((id) => id !== noradId);
@@ -462,7 +462,7 @@ async function loadWatchlists() {
       row.innerHTML = `
         <span class="wl-name">${wl.name}</span>
         <span class="wl-count">${wl.objects.length} obj</span>
-        <button class="wl-del" title="Delete">Ã—</button>`;
+        <button class="wl-del" title="Delete">×</button>`;
 
       row.querySelector(".wl-name").addEventListener("click", async () => {
         // Load watchlist objects into the selection.
@@ -563,7 +563,7 @@ async function startJob(kind) {
 
   const originalText = button.textContent;
 
-  button.textContent = "STARTING JOBâ€¦";
+  button.textContent = "STARTING JOB...";
 
   try {
     const job = await api("/analysis/start", {
@@ -592,7 +592,7 @@ async function startJob(kind) {
             const summary = state.result || {};
 
             // Fetch ranked alerts by re-running a lightweight
-            // sync screen is wasteful â€” instead use persisted
+            // sync screen is wasteful — instead use persisted
             // conjunctions endpoint filtered client-side.
             const conj = await api(`/conjunctions?limit=50`);
 
@@ -620,7 +620,7 @@ async function startJob(kind) {
       },
     );
 
-    button.textContent = "RUNNINGâ€¦";
+    button.textContent = "RUNNING...";
   } catch (error) {
     button.disabled = false;
     button.textContent = originalText;
@@ -712,10 +712,10 @@ function renderAlertList(screening) {
       <div class="alert-head">
         <span class="badge ${alert.risk_level}">${alert.risk_level}</span>
         <span class="alert-score" style="color:${color}">${
-          alert.risk_score ?? "â€”"
+          alert.risk_score ?? "—"
         }/100</span>
       </div>
-      <div class="alert-pair">${index + 1}. ${alert.object_a.name} Ã— ${alert.object_b.name}</div>
+      <div class="alert-pair">${index + 1}. ${alert.object_a.name} × ${alert.object_b.name}</div>
       <div class="alert-details">
         <span>TCA ${formatCountdown(alert.hours_to_tca)}</span>
         <span>${fmtKm(alert.minimum_distance_km)}</span>
@@ -922,7 +922,7 @@ playPauseBtn.addEventListener("click", () => {
 });
 
 function updatePlayPauseButton() {
-  playPauseBtn.textContent = viewer.clock.shouldAnimate ? "âšâš" : "â–¶";
+  playPauseBtn.textContent = viewer.clock.shouldAnimate ? "⏸" : "▶";
 }
 
 function renderSpeedButtons() {
@@ -936,7 +936,7 @@ function renderSpeedButtons() {
     button.className =
       "og-toggle" + (appState.playback_speed === speed ? " active" : "");
 
-    button.textContent = `${speed}Ã—`;
+    button.textContent = `${speed}×`;
 
     button.addEventListener("click", () => {
       appState.playback_speed = speed;
@@ -1044,7 +1044,7 @@ async function loadVisualization(resetView = true) {
     pairs_screened:
       forecast.objects.length * (forecast.objects.length - 1) / 2,
     pairs_flagged: conjunction.events?.length ?? 1,
-    screen_threshold_km: "â€”",
+    screen_threshold_km: "—",
     horizon_hours: forecast.forecast.horizon_hours,
     step_minutes: forecast.forecast.step_minutes,
   });
@@ -1257,7 +1257,7 @@ function addCopilotMessage(text, who) {
 async function askCopilot(question) {
   addCopilotMessage(question, "user");
 
-  const thinking = addCopilotMessage("Analyzing verified system dataâ€¦", "bot");
+  const thinking = addCopilotMessage("Analyzing verified system data...", "bot");
 
   try {
     const response = await api("/ai/chat", {
@@ -1299,7 +1299,7 @@ window.__copilotExplainEvent = async () => {
   copilotDock.hidden = false;
 
   const thinking = addCopilotMessage(
-    "Generating grounded explanationâ€¦",
+    "Generating grounded explanation...",
     "bot",
   );
 
