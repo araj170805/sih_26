@@ -1,0 +1,14 @@
+# Environment / secrets
+.env
+backend/.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node
+node_modules/
+
+# Cesium build output
+frontend/cesium-app/dist/

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>System Health — Orbital Guardian</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/base.css" />
+  <link rel="stylesheet" href="/src/styles/dashboard.css" />
+  <style>
+    .sys-wrap { max-width: 900px; margin: 0 auto; padding: 5rem 1.5rem 3rem; }
+    .sys-card {
+      border: 1px solid var(--border-subtle); border-radius: var(--radius);
+      background: var(--bg-panel-solid); padding: 1rem 1.2rem; margin-bottom: 0.8rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .svc-name { font-size: 0.86rem; font-weight: 600; }
+    .svc-detail { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; max-width: 520px; }
+    .svc-status { font-size: 0.64rem; letter-spacing: 0.18em; padding: 0.3rem 0.7rem; border-radius: 999px; border: 1px solid var(--border-subtle); white-space: nowrap; }
+    .st-ONLINE { color: var(--success); border-color: rgba(52,209,123,.4); }
+    .st-OFFLINE { color: var(--danger); border-color: rgba(255,93,93,.4); }
+    .st-DEGRADED, .st-EMPTY { color: var(--warning); border-color: rgba(255,180,84,.4); }
+    .st-NOT_CONFIGURED, .st-LOCAL_FALLBACK { color: var(--text-muted); }
+    h1 { font-size: 1.1rem; letter-spacing: .22em; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap: .8rem; margin-bottom: 2rem; }
+    .metric { border: 1px solid var(--border-subtle); border-radius: var(--radius); padding: 0.9rem 1rem; background: var(--bg-panel-solid); }
+    .metric b { display:block; font-family: var(--font-mono); font-size: 1.25rem; color: var(--accent); }
+    .metric span { font-size: 0.6rem; letter-spacing: .2em; color: var(--text-muted); }
+  </style>
+</head>
+<body class="dash">
+  <header class="topbar">
+    <a class="brand" href="/app.html"><span class="brand-mark"></span> ORBITAL GUARDIAN</a>
+    <div class="topbar-status">
+      <span class="utc-clock mono" id="utcClock">--:--:-- UTC</span>
+      <span class="status-pill" id="overallPill"><i></i>CHECKING</span>
+    </div>
+  </header>
+
+  <div class="sys-wrap">
+    <h1>SYSTEM HEALTH &amp; METRICS</h1>
+    <p style="color:var(--text-secondary);font-size:.82rem;">
+      Live probes against real services. Optional integrations show NOT_CONFIGURED until you provide credentials.
+    </p>
+
+    <div class="metrics-grid" id="metricsGrid"></div>
+
+    <div id="servicesList"></div>
+  </div>
+
+  <script type="module">
+    import { api } from "/src/api.js";
+
+    setInterval(() => {
+      document.getElementById("utcClock").textContent =
+        `${new Date().toISOString().slice(11, 19)} UTC`;
+    }, 1000);
+
+    async function load() {
+      const pill = document.getElementById("overallPill");
+
+      try {
+        const health = await api("/system/health");
+
+        const cls = health.overall_status === "ONLINE" ? "online"
+          : health.overall_status === "OFFLINE" ? "offline" : "degraded";
+
+        pill.className = `status-pill ${cls}`;
+        pill.innerHTML = `<i></i>${health.overall_status}`;
+
+        document.getElementById("servicesList").innerHTML = health.services
+          .map(
+            (s) => `
+          <div class="sys-card">
+            <div>
+              <div class="svc-name">${s.service}</div>
+              ${s.detail ? `<div class="svc-detail">${s.detail}</div>` : ""}
+              ${
+                s.metrics
+                  ? `<div class="svc-detail">${Object.entries(s.metrics)
+                      .map(([k, v]) => `${k}: ${v ?? "—"}`)
+                      .join(" · ")}</div>`
+                  : ""
+              }
+            </div>
+            <span class="svc-status st-${s.status}">${s.status}</span>
+          </div>`,
+          )
+          .join("");
+      } catch (error) {
+        pill.className = "status-pill offline";
+        pill.innerHTML = "<i></i>API OFFLINE";
+
+        document.getElementById("servicesList").innerHTML =
+          `<div class="sys-card"><div class="svc-name">Backend API unreachable</div></div>`;
+      }
+
+      try {
+        const metrics = await api("/system/metrics");
+
+        if (metrics.available) {
+          document.getElementById("metricsGrid").innerHTML = Object.entries(metrics)
+            .filter(([k]) => k !== "available")
+            .map(
+              ([k, v]) =>
+                `<div class="metric"><b>${v ?? "—"}</b><span>${k.replace(/_/g, " ").toUpperCase()}</span></div>`,
+            )
+            .join("");
+        }
+      } catch {
+        /* metrics optional */
+      }
+    }
+
+    load();
+    setInterval(load, 30000);
+  </script>
+</body>
+</html>

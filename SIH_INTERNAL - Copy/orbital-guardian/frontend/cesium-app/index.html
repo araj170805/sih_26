@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orbital Guardian — See the Encounter Before It Happens</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/base.css" />
+  <link rel="stylesheet" href="/src/styles/landing.css" />
+</head>
+<body>
+
+  <!-- ===================== NAV ===================== -->
+  <nav class="og-nav">
+    <div class="og-nav-brand">
+      <span class="brand-mark"></span>
+      ORBITAL&nbsp;GUARDIAN
+    </div>
+    <div class="og-nav-links">
+      <a href="#capabilities">Capabilities</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="#intelligence">Intelligence</a>
+      <a href="#architecture">Architecture</a>
+    </div>
+    <div class="og-nav-actions">
+      <a class="og-btn small" href="/login.html">Sign in</a>
+      <a class="og-btn small primary" href="/app.html">Launch platform</a>
+    </div>
+  </nav>
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <canvas id="orbitCanvas" aria-hidden="true"></canvas>
+    <div class="hero-inner">
+      <div class="hero-eyebrow">SPACE SITUATIONAL AWARENESS · CONJUNCTION DECISION SUPPORT</div>
+      <h1>ORBITAL GUARDIAN</h1>
+      <p class="tagline">See the encounter before it happens.</p>
+      <p class="lede">
+        A space traffic intelligence platform for orbital propagation,
+        conjunction detection, explainable risk prioritization, object
+        intelligence and 3D decision support — powered by real TLE data
+        and the SGP4 standard.
+      </p>
+      <div class="hero-actions">
+        <a class="og-btn primary big" href="/app.html">LAUNCH PLATFORM</a>
+        <a class="og-btn big" href="/app.html#demo">EXPLORE DEMO</a>
+      </div>
+      <div class="hero-stats" id="liveStats">
+        <div class="stat"><span id="statObjects" class="stat-value">—</span><span class="stat-label">TRACKED OBJECTS</span></div>
+        <div class="stat"><span class="stat-value">SGP4</span><span class="stat-label">PROPAGATION CORE</span></div>
+        <div class="stat"><span class="stat-value">72 h</span><span class="stat-label">FORECAST HORIZON</span></div>
+        <div class="stat"><span class="stat-value" id="statSystem">—</span><span class="stat-label">SYSTEM STATUS</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== CAPABILITIES ===================== -->
+  <section id="capabilities" class="section">
+    <h2 class="section-title">LIVE SYSTEM CAPABILITIES</h2>
+    <p class="section-sub">Every capability below runs on the deployed backend — no mock data.</p>
+    <div class="cap-grid" id="capGrid"></div>
+  </section>
+
+  <!-- ===================== PIPELINE ===================== -->
+  <section id="pipeline" class="section alt">
+    <h2 class="section-title">HOW THE ANALYSIS PIPELINE WORKS</h2>
+    <p class="section-sub">Deterministic astrodynamics. Every stage is observable while a job runs.</p>
+    <div class="pipeline-flow">
+      <div class="pipe-step"><span class="pipe-num">01</span><b>TLE Acquisition</b><small>CelesTrak GP data by NORAD ID, disk+memory cache, fallback providers</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><span class="pipe-num">02</span><b>Validation &amp; Parsing</b><small>Element sanity checks → SGP4 Satrec models</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><span class="pipe-num">03</span><b>SGP4 Propagation</b><small>Deterministic trajectories up to 72 h at user-selected resolution</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><span class="pipe-num">04</span><b>Broad-Phase Screening</b><small>All-pairs sampled distance filter eliminates distant pairs</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><span class="pipe-num">05</span><b>TCA Refinement</b><small>1-second resolution search around each candidate encounter</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><span class="pipe-num">06</span><b>Risk &amp; Confidence</b><small>Explainable Operational Risk Priority + data-freshness confidence</small></div>
+    </div>
+  </section>
+
+  <!-- ===================== INTELLIGENCE ===================== -->
+  <section id="intelligence" class="section">
+    <h2 class="section-title">OBJECT INTELLIGENCE &amp; EXPLAINABLE RISK</h2>
+    <div class="split">
+      <div>
+        <h3>Know what you're tracking</h3>
+        <p>
+          Click any object to open its intelligence profile: identity and classification,
+          mission context where verified data exists, live orbital state computed from the
+          actual TLE (altitude, velocity, inclination, apogee/perigee, period), data
+          freshness with confidence scoring, and upcoming conjunction context from the
+          event database. Debris is labeled honestly — no invented missions.
+        </p>
+        <ul class="check-list">
+          <li>Payload / rocket body / debris classification</li>
+          <li>Live sub-satellite point &amp; orbital elements</li>
+          <li>TLE age, freshness status and prediction confidence</li>
+          <li>Source transparency for every data layer</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Understand every alert</h3>
+        <p>
+          Each flagged event carries an explainable score — not a black box:
+        </p>
+        <div class="risk-demo">
+          <div class="risk-head">
+            <span>OPERATIONAL RISK PRIORITY</span>
+            <b class="risk-score-demo">87<span>/100</span></b>
+          </div>
+          <div class="rf"><span>Miss Distance</span><i style="--w:96%"></i><em>48/50</em></div>
+          <div class="rf"><span>Relative Velocity</span><i style="--w:80%"></i><em>16/20</em></div>
+          <div class="rf"><span>Time Urgency</span><i style="--w:70%"></i><em>14/20</em></div>
+          <div class="rf"><span>Object Criticality</span><i style="--w:60%"></i><em>6/10</em></div>
+          <div class="conf-row">DATA CONFIDENCE <b>82%</b> · TLE FRESHNESS GOOD</div>
+          <p class="disclaimer-note">Heuristic screening priority — explicitly NOT a probability of collision.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== REPLAY / COPILOT ===================== -->
+  <section class="section alt">
+    <div class="split">
+      <div>
+        <h2 class="section-title left">3D ENCOUNTER REPLAY</h2>
+        <p>
+          Replay any conjunction from T−30 minutes through T+30 on the Cesium globe:
+          both trajectories, the closest-approach geometry, a live separation readout,
+          follow-cam for either object, and jump-to-TCA controls. The simulation clock,
+          timeline scrubber and globe stay perfectly synchronized.
+        </p>
+      </div>
+      <div>
+        <h2 class="section-title left">AI SPACE INTELLIGENCE COPILOT</h2>
+        <p>
+          Ask "why is this conjunction high risk?" or "what was this satellite launched
+          for?" The copilot answers only from verified system data plus a scientific
+          knowledge base covering TLEs, SGP4, screening methodology and uncertainty.
+          Without an AI key it still explains events deterministically — grounded,
+          never invented.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ARCHITECTURE ===================== -->
+  <section id="architecture" class="section">
+    <h2 class="section-title">SYSTEM ARCHITECTURE &amp; TECHNOLOGY</h2>
+    <div class="arch-grid">
+      <div class="arch-card"><b>FastAPI Backend</b><small>Async-capable REST API, JWT auth with roles, SSE job progress streaming</small></div>
+      <div class="arch-card"><b>SGP4 Astrodynamics</b><small>Reference sgp4 library — deterministic propagation, TEME state vectors</small></div>
+      <div class="arch-card"><b>CesiumJS Frontend</b><small>WGS84 globe, real-time clock sync, TEME→fixed conversion in-browser</small></div>
+      <div class="arch-card"><b>PostgreSQL / SQLite</b><small>Forecasts, conjunction history, users, jobs, watchlists, notifications</small></div>
+      <div class="arch-card"><b>Intelligence Layer</b><small>Object profiles, curated registry, optional external metadata providers</small></div>
+      <div class="arch-card"><b>RAG Knowledge Base</b><small>Bundled scientific corpus; pluggable embeddings &amp; vector store</small></div>
+    </div>
+  </section>
+
+  <!-- ===================== CTA ===================== -->
+  <footer class="cta">
+    <h2>READY TO SEE THE ENCOUNTER?</h2>
+    <p>No account needed to explore the demo. Analyst accounts unlock jobs, watchlists and reports.</p>
+    <div class="hero-actions center">
+      <a class="og-btn primary big" href="/register.html">CREATE ANALYST ACCOUNT</a>
+      <a class="og-btn big" href="/app.html">LAUNCH PLATFORM</a>
+    </div>
+    <p class="fineprint">
+      Orbital data © CelesTrak. Risk scores are screening heuristics, not collision probabilities.
+    </p>
+  </footer>
+
+  <script type="module" src="/src/landing.js"></script>
+</body>
+</html>

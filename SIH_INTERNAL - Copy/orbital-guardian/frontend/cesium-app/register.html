@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — Orbital Guardian</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/base.css" />
+  <link rel="stylesheet" href="/src/styles/auth.css" />
+</head>
+<body>
+  <div class="auth-shell">
+    <canvas id="authStars" aria-hidden="true"></canvas>
+    <form class="auth-card" id="registerForm">
+      <a class="back-link" href="/">← Orbital Guardian</a>
+      <h1>CREATE OPERATOR ACCOUNT</h1>
+      <p class="auth-sub">The first account created becomes the system administrator.</p>
+
+      <label>FULL NAME / USERNAME
+        <input type="text" id="username" required minlength="3" maxlength="80" placeholder="j.houston" />
+      </label>
+      <label>EMAIL
+        <input type="email" id="email" required autocomplete="email" placeholder="operator@example.com" />
+      </label>
+      <label>PASSWORD
+        <input type="password" id="password" required minlength="8" autocomplete="new-password" placeholder="Min 8 characters, incl. a digit" />
+      </label>
+
+      <div class="auth-error" id="authError" hidden></div>
+
+      <button class="og-btn primary" type="submit" id="submitBtn">REGISTER</button>
+
+      <p class="auth-alt">Already registered? <a href="/login.html">Sign in</a></p>
+    </form>
+  </div>
+  <script type="module" src="/src/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Control — Orbital Guardian</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/base.css" />
+  <link rel="stylesheet" href="/src/styles/dashboard.css" />
+</head>
+<body class="dash">
+
+  <!-- ================= TOP BAR ================= -->
+  <header class="topbar">
+    <button id="sidebarToggle" class="icon-btn" title="Toggle control panel">☰</button>
+
+    <a class="brand" href="/">
+      <span class="brand-mark"></span> ORBITAL GUARDIAN
+      <span class="brand-sub">CONJUNCTION DECISION SUPPORT</span>
+    </a>
+
+    <div class="topbar-status">
+      <span class="utc-clock mono" id="utcClock">--:--:-- UTC</span>
+      <span class="status-pill" id="systemStatus"><i></i>CONNECTING</span>
+    </div>
+
+    <div class="topbar-actions">
+      <div class="notif-wrap">
+        <button id="notifBtn" class="icon-btn" title="Notifications">🔔<span class="notif-count" id="notifCount" hidden>0</span></button>
+        <div class="notif-panel" id="notifPanel" hidden></div>
+      </div>
+
+      <div class="profile-wrap">
+        <button id="profileBtn" class="profile-btn">
+          <span class="avatar" id="userAvatar">?</span>
+          <span id="profileName">GUEST</span>
+        </button>
+        <div class="profile-menu" id="profileMenu" hidden>
+          <div class="pm-user" id="pmUserDetails"></div>
+          <a href="/login.html" class="pm-item" id="pmLogin">Sign in</a>
+          <a href="/register.html" class="pm-item" id="pmRegister">Create account</a>
+          <a href="/system.html" class="pm-item hidden-admin" id="pmSystem">System health</a>
+          <button class="pm-item" id="pmLogout" hidden>Sign out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN GRID ================= -->
+  <div class="workspace">
+
+    <!-- LEFT CONTROL PANEL -->
+    <aside class="left-panel" id="leftPanel">
+      <div class="lp-scroll">
+        <section class="lp-section">
+          <h3>FORECAST HORIZON</h3>
+          <div class="toggle-row" id="horizonButtons"></div>
+          <h3>RESOLUTION</h3>
+          <div class="toggle-row" id="stepButtons"></div>
+        </section>
+
+        <section class="lp-section">
+          <h3>OBJECT SEARCH</h3>
+          <div class="search-row">
+            <input type="text" id="objectSearch" placeholder="Search catalog…" autocomplete="off" />
+            <div class="search-results" id="searchResults" hidden></div>
+          </div>
+          <div class="norad-row">
+            <input type="number" id="noradInput" min="1" placeholder="NORAD ID" />
+            <button class="og-btn small" id="addSatelliteBtn">ADD</button>
+          </div>
+          <h3>SELECTED OBJECTS</h3>
+          <div class="chips" id="satelliteChips"></div>
+          <h3>QUICK ADD</h3>
+          <div class="chips wrap" id="presetChips"></div>
+        </section>
+
+        <section class="lp-section" id="watchlistSection" hidden>
+          <h3>WATCHLISTS</h3>
+          <div id="watchlistList"></div>
+          <div class="wl-create-row">
+            <input type="text" id="watchlistName" placeholder="New watchlist name" />
+            <button class="og-btn small" id="createWatchlistBtn">CREATE</button>
+          </div>
+        </section>
+
+        <section class="lp-actions">
+          <button class="og-btn primary" id="runAnalysisBtn">RUN ANALYSIS</button>
+          <button class="og-btn" id="screenButton">SCREEN CONJUNCTIONS</button>
+          <div class="auth-hint" id="authHint" hidden>
+            Sign in to unlock analysis jobs, watchlists and reports — every operator has full access. <a href="/login.html">Sign in →</a>
+          </div>
+        </section>
+
+        <!-- LIVE PIPELINE -->
+        <section class="lp-section collapsible open" id="pipelineSection">
+          <h3 class="collapse-toggle">LIVE PIPELINE <span class="chev">▾</span></h3>
+          <div class="collapse-body">
+            <div class="pipeline" id="pipelineFlow">
+              <div class="pipe-idle">Run an analysis to watch the real backend pipeline execute.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="lp-section collapsible open">
+          <h3 class="collapse-toggle">RISK ALERTS <span class="chev">▾</span></h3>
+          <div class="collapse-body">
+            <div class="alerts" id="alertList">
+              <div class="empty-hint">Select objects and run screening to detect upcoming conjunctions.</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <!-- CENTER: CESIUM GLOBE -->
+    <main class="globe-area">
+      <div id="cesiumContainer"></div>
+
+      <div class="view-modes" id="viewModes">
+        <button data-mode="global" class="active">GLOBAL VIEW</button>
+        <button data-mode="focus">OBJECT FOCUS</button>
+        <button data-mode="conjunction">CONJUNCTION FOCUS</button>
+      </div>
+
+      <div class="globe-legend" id="globeLegend"></div>
+    </main>
+
+    <!-- RIGHT INTELLIGENCE PANEL -->
+    <aside class="right-panel" id="rightPanel">
+      <div class="rp-scroll" id="intelligenceContent">
+        <div class="ii-empty">
+          <h4>ANALYSIS SUMMARY</h4>
+          <p>Select objects and run an analysis, or click any object to open its intelligence profile.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ================= BOTTOM TIMELINE ================= -->
+  <footer class="timeline-bar">
+    <div class="tl-controls">
+      <button class="icon-btn" id="tlPlayPause" title="Play / Pause">▶</button>
+      <div class="speed-group" id="speedButtons"></div>
+    </div>
+
+    <div class="tl-track-wrap">
+      <div class="tl-track" id="tlTrack">
+        <div class="tl-progress" id="tlProgress"></div>
+        <div class="tl-handle" id="tlHandle"></div>
+        <div class="tl-tca-marker" id="tlTcaMarker" hidden title="Time of Closest Approach"></div>
+      </div>
+      <div class="tl-labels">
+        <span class="mono" id="tlStart">—</span>
+        <span class="mono tl-current" id="tlCurrent">—</span>
+        <span class="mono" id="tlEnd">—</span>
+      </div>
+    </div>
+
+    <div class="tl-jumps">
+      <button class="og-btn small" id="tlJumpTca" disabled>JUMP TO TCA</button>
+      <button class="og-btn small" id="replayEventBtn" disabled>REPLAY EVENT</button>
+      <button class="og-btn small" id="resetCamBtn">RESET CAMERA</button>
+    </div>
+  </footer>
+
+  <!-- Copilot dock -->
+  <button id="copilotFab" title="AI Copilot">✦ COPILOT</button>
+  <div class="copilot-dock" id="copilotDock" hidden>
+    <div class="cd-header">
+      <b>SPACE INTELLIGENCE COPILOT</b>
+      <span id="copilotMode" class="mono">deterministic mode</span>
+      <button class="icon-btn cd-close" id="copilotClose">×</button>
+    </div>
+    <div class="cd-messages" id="copilotMessages">
+      <div class="cd-msg bot">Ask about the selected object or conjunction event. Answers are grounded in verified system data and bundled scientific references.</div>
+    </div>
+    <form class="cd-input-row" id="copilotForm">
+      <input type="text" id="copilotInput" placeholder="e.g. Why is this event high risk?" autocomplete="off" />
+      <button class="og-btn primary small" type="submit">ASK</button>
+    </form>
+  </div>
+
+  <script type="module" src="/src/dashboard/main.js"></script>
+</body>
+</html>

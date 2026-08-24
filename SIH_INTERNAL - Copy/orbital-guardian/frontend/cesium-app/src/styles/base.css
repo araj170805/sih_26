@@ -1,0 +1,211 @@
+﻿/* =====================================================
+   ORBITAL GUARDIAN â€” DESIGN SYSTEM
+   Dark aerospace mission-control aesthetic.
+   ===================================================== */
+
+:root {
+  /* Deep-space charcoal + burnt-orange mission palette */
+  --bg-void: #070403;
+  --bg-deep: #0c0805;
+  --bg-panel: rgba(18, 11, 7, 0.9);
+  --bg-panel-solid: #120b07;
+  --bg-raised: #1d130b;
+  --bg-input: #150d08;
+
+  --border-subtle: rgba(214, 138, 89, 0.16);
+  --border-strong: rgba(255, 107, 53, 0.45);
+
+  --text-primary: #f2e9e1;
+  --text-secondary: #c0a794;
+  --text-muted: #8a7361;
+
+  --accent: #ff6b35;
+  --accent-dim: #b34a22;
+  --success: #6fbf73;
+  --warning: #f5a623;
+  --danger: #ef5350;
+  --critical: #ff3860;
+
+  --risk-critical: #ff3860;
+  --risk-high: #ff7a45;
+  --risk-medium: #ffb347;
+  --risk-low: #8bc34a;
+
+  /* Typography: Anton for display, Archivo for UI */
+  --font-hero: "Anton", "Archivo Black", "Arial Black", sans-serif;
+  --font-display: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+
+  --radius: 8px;
+  --radius-sm: 5px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* -----------------------------------------------------
+   TYPOGRAPHY SYSTEM
+   - hero/headings: Anton, uppercase, wide presence
+   - data values: monospaced with tabular numerals
+   - labels: uppercase, wide tracking, muted
+   ----------------------------------------------------- */
+
+h1, h2, h3, h4, h5 {
+  text-wrap: balance;
+}
+
+.mono,
+code {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* Numeric readouts never jitter while updating */
+.kv dd,
+.alert-score,
+.stat-value,
+.utc-clock,
+.ps-time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* -----------------------------------------------------
+   SHARED PRIMITIVES
+   ----------------------------------------------------- */
+
+.og-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.1s ease;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.og-btn:hover {
+  background: rgba(255, 107, 53, 0.1);
+  border-color: var(--accent);
+}
+
+.og-btn:active {
+  transform: translateY(1px);
+}
+
+.og-btn.primary {
+  background: var(--accent);
+  color: #160a05;
+  border-color: var(--accent);
+}
+
+.og-btn.primary:hover {
+  background: #ff8c5a;
+}
+
+.og-btn.danger {
+  color: var(--danger);
+  border-color: rgba(255, 93, 93, 0.4);
+}
+
+.og-btn.danger:hover {
+  background: rgba(255, 93, 93, 0.12);
+}
+
+.og-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.og-btn.small {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.7rem;
+}
+
+input,
+select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 0.55rem 0.75rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--accent-dim);
+}
+
+::placeholder {
+  color: var(--text-muted);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(214, 138, 89, 0.25);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(214, 138, 89, 0.45);
+}
+
+/* Risk level colors */
+.risk-CRITICAL { color: var(--risk-critical); }
+.risk-HIGH     { color: var(--risk-high); }
+.risk-MEDIUM   { color: var(--risk-medium); }
+.risk-LOW      { color: var(--risk-low); }
+
+.badge {
+  display: inline-block;
+  padding: 0.14rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #06101d;
+}
+
+.badge.CRITICAL { background: var(--risk-critical); color: #fff; }
+.badge.HIGH     { background: var(--risk-high); }
+.badge.MEDIUM   { background: var(--risk-medium); }
+.badge.LOW      { background: var(--risk-low); }
+.badge.MONITOR  { background: var(--warning); }
+.badge.SAFE     { background: var(--text-muted); color: #fff; }
